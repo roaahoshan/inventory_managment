@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="he">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ניהול מלאי - רשת פוקס</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            direction: rtl;
+            text-align: center;
+            background-color: #f8f9fa;
+            margin: 0;
+            padding: 0;
+        }
+        .container {
+            width: 100%;
+            height: 100vh;
+            padding: 20px;
+            background: white;
+            box-shadow: 0px 0px 10px gray;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+        table {
+            width: 80%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: center;
+        }
+        th {
+            background-color: #007bff;
+            color: white;
+        }
+        .low-stock {
+            background-color: #ffcccc !important;
+        }
+        .btn {
+            background-color: #28a745;
+            color: white;
+            padding: 10px 15px;
+            border: none;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+        .input-field {
+            width: 50%;
+            padding: 8px;
+            margin-top: 10px;
+            border: 1px solid #ddd;
+        }
+        #lowStockAlert {
+            margin-top: 20px;
+            padding: 10px;
+            background-color: #ffcc00;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>מערכת ניהול מלאי</h2>
+        <input type="text" id="barcodeInput" class="input-field" placeholder="הזן ברקוד לבדיקה">
+        <button class="btn" onclick="checkInventory()">בדוק מלאי</button>
+        <table id="inventoryTable">
+            <thead>
+                <tr>
+                    <th>ברקוד</th>
+                    <th>שם מוצר</th>
+                    <th>קטגוריה</th>
+                    <th>כמות</th>
+                    <th>מחיר</th>
+                    <th>פעולות</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>123456789</td>
+                    <td>חולצה אדומה</td>
+                    <td>ביגוד</td>
+                    <td class="quantity">50</td>
+                    <td>₪99</td>
+                    <td><button onclick="editProduct(this)">ערוך</button> <button onclick="deleteProduct(this)">מחק</button></td>
+                </tr>
+                <tr>
+                    <td>987654321</td>
+                    <td>מכנס ג'ינס</td>
+                    <td>ביגוד</td>
+                    <td class="quantity">5</td>
+                    <td>₪149</td>
+                    <td><button onclick="editProduct(this)">ערוך</button> <button onclick="deleteProduct(this)">מחק</button></td>
+                </tr>
+            </tbody>
+        </table>
+        <button class="btn" onclick="addProduct()">הוסף מוצר</button>
+        <div id="lowStockAlert">⚠️ ישנם מוצרים במלאי נמוך! ⚠️</div>
+    </div>
+    <script>
+        function checkInventory() {
+            let barcode = document.getElementById("barcodeInput").value;
+            let rows = document.querySelectorAll("#inventoryTable tbody tr");
+            let found = false;
+            rows.forEach(row => {
+                if (row.cells[0].innerText === barcode) {
+                    alert(`המוצר נמצא במלאי. כמות זמינה: ${row.cells[3].innerText}`);
+                    found = true;
+                }
+            });
+            if (!found) alert("המוצר לא נמצא במלאי");
+        }
+        
+        function editProduct(button) {
+            let row = button.parentNode.parentNode;
+            let quantityCell = row.cells[3];
+            let priceCell = row.cells[4];
+            let newQuantity = prompt("הזן כמות חדשה:", quantityCell.innerText);
+            let newPrice = prompt("הזן מחיר חדש:", priceCell.innerText.replace("₪", ""));
+            if (!isNaN(newQuantity) && newQuantity !== null) quantityCell.innerText = newQuantity;
+            if (!isNaN(newPrice) && newPrice !== null) priceCell.innerText = `₪${newPrice}`;
+            checkLowStock();
+        }
+        
+        function deleteProduct(button) {
+            if (confirm("האם אתה בטוח שברצונך למחוק מוצר זה?")) {
+                button.parentNode.parentNode.remove();
+                checkLowStock();
+            }
+        }
+        
+        function addProduct() {
+            let barcode = prompt("הזן ברקוד:");
+            let name = prompt("הזן שם מוצר:");
+            let category = prompt("הזן קטגוריה:");
+            let quantity = prompt("הזן כמות:");
+            let price = prompt("הזן מחיר:");
+            if (barcode && name && category && !isNaN(quantity) && !isNaN(price)) {
+                let table = document.querySelector("#inventoryTable tbody");
+                let newRow = table.insertRow();
+                newRow.innerHTML = `<td>${barcode}</td><td>${name}</td><td>${category}</td><td class="quantity">${quantity}</td><td>₪${price}</td><td><button onclick="editProduct(this)">ערוך</button> <button onclick="deleteProduct(this)">מחק</button></td>`;
+                checkLowStock();
+            } else {
+                alert("נא להזין ערכים תקינים.");
+            }
+        }
+        
+        function checkLowStock() {
+            let rows = document.querySelectorAll("#inventoryTable tbody tr");
+            let lowStock = false;
+            rows.forEach(row => {
+                let quantity = parseInt(row.cells[3].innerText);
+                if (quantity < 10) {
+                    row.classList.add("low-stock");
+                    lowStock = true;
+                } else {
+                    row.classList.remove("low-stock");
+                }
+            });
+            document.getElementById("lowStockAlert").style.display = lowStock ? "block" : "none";
+        }
+        checkLowStock();
+    </script>
+</body>
+</html>
